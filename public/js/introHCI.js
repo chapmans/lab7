@@ -20,6 +20,7 @@ function initializePage() {
 
 		// this is the URL we'll call
 		var url_call = '/project/'+idNumber;
+		var c_call = '/comment/'+idNumber;
 
 		// How to respond to the GET request
 		function addProjectDetails(project_json) {
@@ -53,8 +54,33 @@ function initializePage() {
 			});
 		}
 
+		function addComments(project_json) {
+			for (var i = 0; i < project_json.length; i++) {
+				var date_obj = new Date(project_json[i]['date']);
+				var options = {
+					weekday: "long",
+					year: "numeric",
+					month: "long",
+					day: "numeric"
+				};
+				var display_date = date_obj.toLocaleDateString('en-US', options);
+
+				// compose the HTML
+				var new_html =
+					'<span class="comment-name">'+project_json[i]['name']+'</span>'+
+					'<span class="comment-date"> ('+display_date+') </span> - '+
+					'<span class="comment-summary">'+project_json[i]['comment']+'</span><br>'
+
+				// get the DIV to add content to
+				var details_div = $('#project' + idNumber + ' .comments');
+				// add the content to the DIV
+				details_div.append(new_html);
+			}
+		}
+
 		// issue the GET request
 		$.get(url_call, addProjectDetails);
+		$.get(c_call, addComments);
 	});
 
 	$('#newProjectSubmitButton').click(function(e) {
@@ -73,5 +99,24 @@ function initializePage() {
 			window.location.href = '/'; // reload the page
 		});
 	});
+
+	$('.commentButton').click(function(e) {
+		console.log('adding comment');
+		var div = $(this).parent();
+		var projectID = $(this).attr('id').substr('newCommentSubmitButton'.length);
+		var name = div.find('.comment-name').val();
+		var date = div.find('.comment-date').val();
+		var comment = div.find('.comment-text').val();
+		console.log(div);
+		var json = {
+			'name': name,
+			'date': date,
+			'comment': comment,
+			'project': projectID
+		};
+		$.post('/comment/new', json, function() {
+			window.location.href= '/';
+		});
+	})
 }
 
